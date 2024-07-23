@@ -25,6 +25,10 @@ Currently only available via cloning/manual add via the .obsidian/.plugins folde
 
 - The plugin will automatically generate backlinks for new Markdown files and update them when files are moved or deleted.
 
+### Demo
+
+![Auto-Backlink on File Creation](assets/auto-backlink-demo.gif)
+
 - To generate backlinks for all existing files:
   1. Open the Command Palette (Ctrl/Cmd + P)
   2. Search for "Generate Backlinks for All Markdown Files"
