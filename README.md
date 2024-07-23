@@ -13,6 +13,7 @@ This plugin automatically generates backlinks for files in your Obsidian vault b
 - Supports excluding specific folders from backlink generation
 
 ## Installation
+
 Currently only available via cloning/manual add via the .obsidian/.plugins folder, waiting on approval!
 
 1. ~~Open Obsidian and go to Settings > Community Plugins~~
@@ -23,10 +24,6 @@ Currently only available via cloning/manual add via the .obsidian/.plugins folde
 ## Usage
 
 - The plugin will automatically generate backlinks for new Markdown files and update them when files are moved or deleted.
-
-### Demo
-
-[Auto-link generation Demo](assets/auto-link-generation-demo.mp4)
 
 - To generate backlinks for all existing files:
   1. Open the Command Palette (Ctrl/Cmd + P)
