@@ -8,47 +8,26 @@ import {
   TAbstractFile,
   Notice,
   Modal,
-  Hotkey,
-  TextComponent,
-  TextAreaComponent,
 } from "obsidian";
 
 interface AutoBacklinksSettings {
   excludedFolders: string[];
-  regenerateHotkey?: { key: string }[];
 }
 
 const DEFAULT_SETTINGS: AutoBacklinksSettings = {
   excludedFolders: [],
-  regenerateHotkey: undefined,
 };
 
 export default class AutoBacklinksPlugin extends Plugin {
-  settings!: AutoBacklinksSettings;
+  settings: AutoBacklinksSettings;
 
   async onload() {
     await this.loadSettings();
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
     this.addCommand({
       id: "generate-all-backlinks",
       name: "Generate Backlinks for All Markdown Files",
       callback: () => this.processAllFiles(),
-      hotkeys: this.settings.regenerateHotkey
-        ? [{ modifiers: ["Mod"], key: this.settings.regenerateHotkey[0].key }]
-        : undefined,
-    });
-
-    this.addCommand({
-      id: "reload-auto-backlinks-plugin",
-      name: "Reload Auto Backlinks Plugin",
-      callback: () => {
-        // @ts-ignore
-        this.app.plugins.disablePlugin(this.manifest.id);
-        // @ts-ignore
-        this.app.plugins.enablePlugin(this.manifest.id);
-        new Notice("Auto Backlinks plugin reloaded");
-      },
     });
 
     this.registerEvent(
@@ -88,28 +67,23 @@ export default class AutoBacklinksPlugin extends Plugin {
 
   async processAllFiles() {
     new ConfirmationModal(this.app, async () => {
-      const files = this.app.vault.getFiles();
-      let processed = 0;
-      let errors = 0;
+      const files = this.app.vault
+        .getFiles()
+        .filter((file) => file.extension === "md" && !this.isExcluded(file));
+      const notice = new Notice("Processing files...", 0);
 
-      for (const file of files) {
-        if (file.extension === "md" && !this.isExcluded(file)) {
-          try {
-            await this.generateBacklinksForFile(file);
-            processed++;
-            if (processed % 10 === 0) {
-              new Notice(`Processed ${processed} Markdown files`);
-            }
-          } catch (error) {
-            console.error(`Error processing file ${file.path}:`, error);
-            errors++;
-          }
-        }
-      }
-
-      new Notice(
-        `Backlinks generated for ${processed} Markdown files. Errors: ${errors}`
+      const results = await Promise.all(
+        files.map((file) =>
+          this.generateBacklinksForFile(file)
+            .then(() => ({ success: true }))
+            .catch((error) => ({ error }))
+        )
       );
+
+      const processed = results.filter((result) => "success" in result).length;
+      const errors = results.filter((result) => "error" in result).length;
+
+      notice.setMessage(`Processed ${processed} files. Errors: ${errors}`);
     }).open();
   }
 
@@ -140,7 +114,6 @@ export default class AutoBacklinksPlugin extends Plugin {
       }
     } catch (error) {
       console.error(`Error generating backlinks for ${file.path}:`, error);
-      throw error;
     }
   }
 
@@ -155,29 +128,22 @@ export default class AutoBacklinksPlugin extends Plugin {
   }
 
   updateBacklinksInContent(content: string, backlinks: string[]): string {
-    // Remove any existing backlinks section
     const backlinksRegex =
       /\n%% Auto-generated backlinks %%[\s\S]*?%% collapse-end %%|\n## Backlinks[\s\S]*?(?=\n#|$)/g;
-    content = content.replace(backlinksRegex, "");
+    content = content.replace(backlinksRegex, "").trim();
 
-    // Trim any trailing whitespace
-    content = content.trim();
-
-    // Create the new backlinks section
     const backlinksSection = `
 
 ## Backlinks
 ${backlinks.join("\n")}
 `;
 
-    // Add the new backlinks section at the end
     return `${content}\n${backlinksSection}`;
   }
 
   async updateBacklinksInParentFolders(file: TFile) {
-    let currentFolder = file.parent;
-    while (currentFolder && currentFolder.path !== "/") {
-      const folderNoteFile = this.getFolderNoteFile(currentFolder);
+    await this.iterateParentFolders(file, async (folder) => {
+      const folderNoteFile = this.getFolderNoteFile(folder);
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
@@ -185,14 +151,12 @@ ${backlinks.join("\n")}
       ) {
         await this.generateBacklinksForFile(folderNoteFile);
       }
-      currentFolder = currentFolder.parent;
-    }
+    });
   }
 
   async removeBacklinksFromParentFolders(file: TFile) {
-    let currentFolder = file.parent;
-    while (currentFolder && currentFolder.path !== "/") {
-      const folderNoteFile = this.getFolderNoteFile(currentFolder);
+    await this.iterateParentFolders(file, async (folder) => {
+      const folderNoteFile = this.getFolderNoteFile(folder);
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
@@ -204,15 +168,26 @@ ${backlinks.join("\n")}
           await this.app.vault.modify(folderNoteFile, updatedContent);
         }
       }
-      currentFolder = currentFolder.parent;
-    }
+    });
   }
 
   getFolderNoteFile(folder: TFolder): TFile | null {
     const folderNoteName = folder.name + ".md";
-    return this.app.vault.getAbstractFileByPath(
+    const file = this.app.vault.getAbstractFileByPath(
       folder.path + "/" + folderNoteName
-    ) as TFile;
+    );
+    return file instanceof TFile ? file : null;
+  }
+
+  async iterateParentFolders(
+    file: TFile,
+    callback: (folder: TFolder) => Promise<void>
+  ) {
+    let currentFolder = file.parent;
+    while (currentFolder && currentFolder.path !== "/") {
+      await callback(currentFolder);
+      currentFolder = currentFolder.parent;
+    }
   }
 }
 
@@ -224,28 +199,12 @@ class AutoBacklinksSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  display(): void {
-    let { containerEl } = this;
+  display() {
+    const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Auto Backlinks Settings" });
 
     new Setting(containerEl)
-      .setName("Regenerate Hotkey")
-      .setDesc("Set a hotkey to regenerate backlinks for the whole vault")
-      .addText((text) =>
-        text
-          .setPlaceholder("Ctrl+Shift+B")
-          .setValue(this.plugin.settings.regenerateHotkey?.[0]?.key || "")
-          .onChange(async (value) => {
-            this.plugin.settings.regenerateHotkey = value
-              ? [{ key: value }]
-              : undefined;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Excluded Folders")
+      .setName("Excluded folders")
       .setDesc("Folders to exclude from backlink generation (one per line)")
       .addTextArea((text) =>
         text
