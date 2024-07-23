@@ -44,7 +44,6 @@ You can configure the plugin in the settings tab:
 
 In the settings, you can:
 
-- Set a hotkey to regenerate backlinks for the whole vault
 - Specify folders to exclude from backlink generation (one per line)
 
 ## Development
@@ -56,6 +55,15 @@ If you want to contribute to the development of this plugin:
 3. Run `npm run build` to compile the plugin
 4. Copy `main.js` and `manifest.json` to your Obsidian plugins folder
 5. Reload Obsidian to see changes
+
+## Recent Changes
+
+- Improved TypeScript compatibility and type checking
+- Updated build process to use latest esbuild configuration
+- Added support for excluding specific folders from backlink generation
+- Fixed issues with Obsidian type recognition
+
+For a full list of changes, please see the [Changelog](changelog.md).
 
 ## Support
 

@@ -2,7 +2,22 @@
 
 All notable changes to the Obsidian Auto Backlinks Plugin will be documented in this file.
 
-## [Unreleased]
+## [1.2.0] - 2023-07-24
+
+### Added
+
+- New `auto-backlinks.d.ts` file for extending Obsidian types without conflicts
+
+### Changed
+
+- Updated build process to use latest esbuild configuration
+- Improved type checking and TypeScript compatibility
+- Updated dependencies to latest versions
+
+### Fixed
+
+- Resolved issues with Obsidian type recognition
+- Fixed build process errors related to missing esbuild config
 
 ## [1.1.0] - 2023-07-22
 
@@ -27,7 +42,6 @@ All notable changes to the Obsidian Auto Backlinks Plugin will be documented in 
 - Command to generate backlinks for all existing Markdown files
 - Collapsible "Backlinks" section at the bottom of each file
 - Event listeners for file creation, movement, and deletion to update backlinks
-- Reload command for easier plugin development
 
 ### Changed
 
@@ -39,18 +53,3 @@ All notable changes to the Obsidian Auto Backlinks Plugin will be documented in 
 - Resolved issue with processing non-Markdown files
 - Fixed potential duplication of backlinks sections
 - Corrected handling of file events to ensure proper backlink updates
-
-## [0.1.0] - 2023-07-20
-
-### Added
-
-- Initial prototype of the Auto Backlinks Plugin
-- Basic functionality for generating backlinks
-
-### Changed
-
-- Iterated on the backlink generation logic
-
-### Fixed
-
-- Addressed issues with file processing and backlink formatting
