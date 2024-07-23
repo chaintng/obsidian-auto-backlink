@@ -5,7 +5,10 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "build": "rollup --config rollup.config.js"
+    "build": "rollup --config rollup.config.js",
+    "copy-to-vault": "cp main.js manifest.json ~/Documents/Obsidian\\ Vault/.obsidian/plugins/obsidian-auto-backlinks/",
+    "dev": "node esbuild.config.mjs",
+    "postbuild": "npm run copy-to-vault"
   },
   "keywords": [],
   "author": "",
