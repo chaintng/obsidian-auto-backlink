@@ -9,7 +9,6 @@ This plugin automatically generates backlinks for files in your Obsidian vault b
 - Adds a collapsible "Backlinks" section at the bottom of each file
 - Provides a command to generate backlinks for all existing Markdown files in the vault
 - Only processes Markdown (.md) files, leaving other file types untouched
-- Allows setting a hotkey to regenerate backlinks for the whole vault
 - Supports excluding specific folders from backlink generation
 
 ## Installation

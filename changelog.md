@@ -13,6 +13,7 @@ All notable changes to the Obsidian Auto Backlinks Plugin will be documented in 
 - Updated build process to use latest esbuild configuration
 - Improved type checking and TypeScript compatibility
 - Updated dependencies to latest versions
+- Removed hotkey support
 
 ### Fixed
 
