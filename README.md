@@ -13,11 +13,11 @@ This plugin automatically generates backlinks for files in your Obsidian vault b
 - Supports excluding specific folders from backlink generation
 
 ## Installation
-
-1. Open Obsidian and go to Settings > Community Plugins
+Currently only available via cloning/manual add via the .obsidian/.plugins folder, waiting on approval!
+~~1. Open Obsidian and go to Settings > Community Plugins
 2. Disable Safe Mode
 3. Click on "Browse" and search for "Auto Backlinks"
-4. Install the plugin and enable it
+4. Install the plugin and enable it~~
 
 ## Usage
 
