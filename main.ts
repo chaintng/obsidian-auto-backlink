@@ -133,7 +133,7 @@ export default class AutoBacklinksPlugin extends Plugin {
     if (currentFolder) {
       const folderNoteFile = this.getFolderNoteFile(currentFolder)
       if (folderNoteFile) {
-        backlinks.push(`[[${folderNoteFile.path}]]`);
+        backlinks.push(`[[${currentFolder.name}]]`);
       } else {
         backlinks.push(`[[${currentFolder.path}]]`);
       }
