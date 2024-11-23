@@ -11,10 +11,12 @@ import {
 } from "obsidian";
 
 interface AutoBacklinksSettings {
+  includedFolders: string[],
   excludedFolders: string[];
 }
 
 const DEFAULT_SETTINGS: AutoBacklinksSettings = {
+  includedFolders: [],
   excludedFolders: [],
 };
 
@@ -59,17 +61,23 @@ export default class AutoBacklinksPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
-  isExcluded(file: TFile): boolean {
-    return this.settings.excludedFolders.some((folder) =>
+
+  shouldCreateBacklink(file: TFile): boolean {
+    var isExcluded = this.settings.excludedFolders.some((folder) =>
       file.path.startsWith(folder)
     );
+    var isIncluded = this.settings.includedFolders.length == 0 || this.settings.includedFolders.some((folder) =>
+      file.path.startsWith(folder)
+    );
+
+    return isIncluded && !isExcluded;
   }
 
   async processAllFiles() {
     new ConfirmationModal(this.app, async () => {
       const files = this.app.vault
         .getFiles()
-        .filter((file) => file.extension === "md" && !this.isExcluded(file));
+        .filter((file) => file.extension === "md" && !this.shouldCreateBacklink(file));
       const notice = new Notice("Processing files...", 0);
 
       const results = await Promise.all(
@@ -88,20 +96,20 @@ export default class AutoBacklinksPlugin extends Plugin {
   }
 
   async handleFileChange(file: TFile) {
-    if (file.extension === "md" && !this.isExcluded(file)) {
+    if (file.extension === "md" && !this.shouldCreateBacklink(file)) {
       await this.generateBacklinksForFile(file);
       await this.updateBacklinksInParentFolders(file);
     }
   }
 
   async handleFileDeletion(file: TFile) {
-    if (file.extension === "md" && !this.isExcluded(file)) {
+    if (file.extension === "md" && !this.shouldCreateBacklink(file)) {
       await this.removeBacklinksFromParentFolders(file);
     }
   }
 
   async generateBacklinksForFile(file: TFile) {
-    if (file.extension !== "md" || this.isExcluded(file)) {
+    if (file.extension !== "md" || this.shouldCreateBacklink(file)) {
       return;
     }
 
@@ -120,10 +128,18 @@ export default class AutoBacklinksPlugin extends Plugin {
   generateBacklinks(file: TFile): string[] {
     const backlinks: string[] = [];
     let currentFolder = file.parent;
-    while (currentFolder && currentFolder.path !== "/") {
+
+    // Do only parent folder
+    if (currentFolder) {
       backlinks.push(`[[${currentFolder.path}]]`);
-      currentFolder = currentFolder.parent;
     }
+
+    // All parent folders
+    // while (currentFolder && currentFolder.path !== "/") {
+    //   backlinks.push(`[[${currentFolder.path}]]`);
+    //   currentFolder = currentFolder.parent;
+    // }
+
     return backlinks.reverse();
   }
 
@@ -147,7 +163,7 @@ ${backlinks.join("\n")}
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
-        !this.isExcluded(folderNoteFile)
+        !this.shouldCreateBacklink(folderNoteFile)
       ) {
         await this.generateBacklinksForFile(folderNoteFile);
       }
@@ -160,7 +176,7 @@ ${backlinks.join("\n")}
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
-        !this.isExcluded(folderNoteFile)
+        !this.shouldCreateBacklink(folderNoteFile)
       ) {
         const content = await this.app.vault.read(folderNoteFile);
         const updatedContent = content.replace(`[[${file.path}]]`, "");
@@ -212,6 +228,21 @@ class AutoBacklinksSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.excludedFolders.join("\n"))
           .onChange(async (value) => {
             this.plugin.settings.excludedFolders = value
+              .split("\n")
+              .filter((folder) => folder.trim() !== "");
+            await this.plugin.saveSettings();
+          })
+      );
+      
+    new Setting(containerEl)
+      .setName("Included folders")
+      .setDesc("Folders to included from backlink generation (one per line)")
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("folder1\nfolder2/subfolder")
+          .setValue(this.plugin.settings.includedFolders.join("\n"))
+          .onChange(async (value) => {
+            this.plugin.settings.includedFolders = value
               .split("\n")
               .filter((folder) => folder.trim() !== "");
             await this.plugin.saveSettings();
