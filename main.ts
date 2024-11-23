@@ -70,9 +70,7 @@ export default class AutoBacklinksPlugin extends Plugin {
       file.path.startsWith(folder)
     );
 
-    var isFolderNoteFile = file.name == file.parent?.name + ".md";
-
-    return isIncluded && !isExcluded && !isFolderNoteFile;
+    return isIncluded && !isExcluded;
   }
 
   async processAllFiles() {
@@ -135,9 +133,12 @@ export default class AutoBacklinksPlugin extends Plugin {
     if (currentFolder) {
       const folderNoteFile = this.getFolderNoteFile(currentFolder)
       if (folderNoteFile) {
-        backlinks.push(`[[${currentFolder.name}]]`);
+        const parentFolder = currentFolder.parent?.name;
+        if (parentFolder) {
+          backlinks.push(`[[${currentFolder.parent?.name}]]`);
+        }
       } else {
-        backlinks.push(`[[${currentFolder.path}]]`);
+        backlinks.push(`[[${currentFolder.name}]]`);
       }
     }
 
@@ -152,12 +153,12 @@ export default class AutoBacklinksPlugin extends Plugin {
 
   updateBacklinksInContent(content: string, backlinks: string[]): string {
     const backlinksRegex =
-      /\n%% Auto-generated backlinks %%[\s\S]*?%% collapse-end %%|\n## Backlinks[\s\S]*?(?=\n#|$)/g;
+      /\n%% Auto-generated backlinks %%[\s\S]*?%% collapse-end %%|\n## Auto-generated Backlinks[\s\S]*?(?=\n#|$)/g;
     content = content.replace(backlinksRegex, "").trim();
 
     const backlinksSection = `
 
-## Backlinks
+## Auto-generated Backlinks
 ${backlinks.join("\n")}
 `;
 
