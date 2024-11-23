@@ -70,7 +70,9 @@ export default class AutoBacklinksPlugin extends Plugin {
       file.path.startsWith(folder)
     );
 
-    return isIncluded && !isExcluded;
+    var isFolderNoteFile = file.name == file.parent?.name + ".md";
+
+    return isIncluded && !isExcluded && !isFolderNoteFile;
   }
 
   async processAllFiles() {
