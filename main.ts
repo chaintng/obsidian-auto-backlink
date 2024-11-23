@@ -70,7 +70,6 @@ export default class AutoBacklinksPlugin extends Plugin {
       file.path.startsWith(folder)
     );
 
-    debugger;
     return isIncluded && !isExcluded;
   }
 
@@ -132,7 +131,12 @@ export default class AutoBacklinksPlugin extends Plugin {
 
     // Do only parent folder
     if (currentFolder) {
-      backlinks.push(`[[${currentFolder.path}]]`);
+      const folderNoteFile = this.getFolderNoteFile(currentFolder)
+      if (folderNoteFile) {
+        backlinks.push(`[[${folderNoteFile.path}]]`);
+      } else {
+        backlinks.push(`[[${currentFolder.path}]]`);
+      }
     }
 
     // All parent folders
