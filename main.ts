@@ -131,8 +131,8 @@ export default class AutoBacklinksPlugin extends Plugin {
 
     // Do only parent folder
     if (currentFolder) {
-      const folderNoteFile = this.getFolderNoteFile(currentFolder)
-      if (folderNoteFile) {
+      const isFolderNoteFile = file.basename == file.parent?.name; // is folder note
+      if (isFolderNoteFile) {
         const parentFolder = currentFolder.parent?.name;
         if (parentFolder) {
           backlinks.push(`[[${currentFolder.parent?.name}]]`);
