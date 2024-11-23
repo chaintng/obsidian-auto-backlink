@@ -70,6 +70,7 @@ export default class AutoBacklinksPlugin extends Plugin {
       file.path.startsWith(folder)
     );
 
+    debugger;
     return isIncluded && !isExcluded;
   }
 
@@ -77,7 +78,7 @@ export default class AutoBacklinksPlugin extends Plugin {
     new ConfirmationModal(this.app, async () => {
       const files = this.app.vault
         .getFiles()
-        .filter((file) => file.extension === "md" && !this.shouldCreateBacklink(file));
+        .filter((file) => file.extension === "md" && this.shouldCreateBacklink(file));
       const notice = new Notice("Processing files...", 0);
 
       const results = await Promise.all(
@@ -96,20 +97,20 @@ export default class AutoBacklinksPlugin extends Plugin {
   }
 
   async handleFileChange(file: TFile) {
-    if (file.extension === "md" && !this.shouldCreateBacklink(file)) {
+    if (file.extension === "md" && this.shouldCreateBacklink(file)) {
       await this.generateBacklinksForFile(file);
       await this.updateBacklinksInParentFolders(file);
     }
   }
 
   async handleFileDeletion(file: TFile) {
-    if (file.extension === "md" && !this.shouldCreateBacklink(file)) {
+    if (file.extension === "md" && this.shouldCreateBacklink(file)) {
       await this.removeBacklinksFromParentFolders(file);
     }
   }
 
   async generateBacklinksForFile(file: TFile) {
-    if (file.extension !== "md" || this.shouldCreateBacklink(file)) {
+    if (file.extension !== "md" || !this.shouldCreateBacklink(file)) {
       return;
     }
 
@@ -163,7 +164,7 @@ ${backlinks.join("\n")}
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
-        !this.shouldCreateBacklink(folderNoteFile)
+        this.shouldCreateBacklink(folderNoteFile)
       ) {
         await this.generateBacklinksForFile(folderNoteFile);
       }
@@ -176,7 +177,7 @@ ${backlinks.join("\n")}
       if (
         folderNoteFile &&
         folderNoteFile.extension === "md" &&
-        !this.shouldCreateBacklink(folderNoteFile)
+        this.shouldCreateBacklink(folderNoteFile)
       ) {
         const content = await this.app.vault.read(folderNoteFile);
         const updatedContent = content.replace(`[[${file.path}]]`, "");
