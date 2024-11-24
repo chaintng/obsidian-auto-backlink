@@ -152,14 +152,15 @@ export default class AutoBacklinksPlugin extends Plugin {
   }
 
   updateBacklinksInContent(content: string, backlinks: string[]): string {
+
     const backlinksRegex = /\n%% Auto-generated backlinks %%[\s\S]*?%% collapse-end %%|\n## Auto-generated Backlinks[\s\S]*?(?=\n#|$)|\n>\s\[\!AUTO-BACKLINKS\].*(?:\n> .*)*/g;
     content = content.replace(backlinksRegex, "").trim();
 
-    const backlinksSection = `
+    const backlinksSection = (backlinks.length !== 0) ? `
 
 > [!AUTO-BACKLINKS] AUTO-BACKLINKS
 > - ${backlinks.join("\n")}
-`;
+` : '';
 
     return `${content}\n${backlinksSection}`;
   }
