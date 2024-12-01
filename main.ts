@@ -180,12 +180,12 @@ export default class AutoBacklinksPlugin extends Plugin {
       return contentAfterRemoveBacklinkSection;
     } else if (match) {
 			const frontmatter = match[1];
-			const updatedFrontmatter = frontmatter.includes('auto-generated-backlink')
-				? frontmatter.replace(/auto-generated-backlink: .*/, `auto-generated-backlink: ${url}`)
-				: `${frontmatter}\nauto-generated-backlink: ${url}`;
+			const updatedFrontmatter = frontmatter.includes('auto-backlink')
+				? frontmatter.replace(/auto-backlink: .*/, `auto-backlink: ${url}`)
+				: `${frontmatter}\nauto-backlink: ${url}`;
 			return contentAfterRemoveBacklinkSection.replace(frontmatterRegex, `---\n${updatedFrontmatter}\n---`);
 		} else {
-			return `---\nauto-generated-backlink: ${url}\n---\n${contentAfterRemoveBacklinkSection}`;
+			return `---\nauto-backlink: ${url}\n---\n${contentAfterRemoveBacklinkSection}`;
 		}
 	}
 
