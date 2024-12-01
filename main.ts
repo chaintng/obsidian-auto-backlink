@@ -11,13 +11,15 @@ import {
 } from "obsidian";
 
 interface AutoBacklinksSettings {
-  includedFolders: string[],
+  includedFolders: string[];
   excludedFolders: string[];
+  useFrontmatter: boolean;
 }
 
 const DEFAULT_SETTINGS: AutoBacklinksSettings = {
   includedFolders: [],
   excludedFolders: [],
+  useFrontmatter: true,
 };
 
 export default class AutoBacklinksPlugin extends Plugin {
@@ -116,7 +118,7 @@ export default class AutoBacklinksPlugin extends Plugin {
     try {
       const content = await this.app.vault.read(file);
       const backlinks = this.generateBacklinks(file);
-      const updatedContent = this.updateBacklinksInContent(content, backlinks);
+      const updatedContent = (this.settings.useFrontmatter) ? this.updateFrontmatter(content, backlinks) : this.updateBacklinksInContent(content, backlinks);
       if (content !== updatedContent) {
         await this.app.vault.modify(file, updatedContent);
       }
@@ -152,7 +154,6 @@ export default class AutoBacklinksPlugin extends Plugin {
   }
 
   updateBacklinksInContent(content: string, backlinks: string[]): string {
-
     const backlinksRegex = /\n%% Auto-generated backlinks %%[\s\S]*?%% collapse-end %%|\n## Auto-generated Backlinks[\s\S]*?(?=\n#|$)|\n>\s\[\!AUTO-BACKLINKS\].*(?:\n> .*)*/g;
     content = content.replace(backlinksRegex, "").trim();
 
@@ -162,8 +163,31 @@ export default class AutoBacklinksPlugin extends Plugin {
 > - ${backlinks.join("\n")}
 ` : '';
 
-    return `${content}\n${backlinksSection}`;
+    return `${content}${backlinksSection}`;
   }
+
+	 updateFrontmatter(fileContent: string, backlinks: string[]) {
+    const contentAfterRemoveBacklinkSection = this.updateBacklinksInContent(fileContent, []);
+
+		const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+		const match = frontmatterRegex.exec(contentAfterRemoveBacklinkSection);
+    
+    const backlinksWithQuote = backlinks.map((backlink) => `"${backlink}"`);
+
+    const url = backlinksWithQuote.join(", ");
+
+		if (backlinksWithQuote.length == 0) {
+      return contentAfterRemoveBacklinkSection;
+    } else if (match) {
+			const frontmatter = match[1];
+			const updatedFrontmatter = frontmatter.includes('auto-generated-backlink')
+				? frontmatter.replace(/auto-generated-backlink: .*/, `auto-generated-backlink: ${url}`)
+				: `${frontmatter}\nauto-generated-backlink: ${url}`;
+			return contentAfterRemoveBacklinkSection.replace(frontmatterRegex, `---\n${updatedFrontmatter}\n---`);
+		} else {
+			return `---\nauto-generated-backlink: ${url}\n---\n${contentAfterRemoveBacklinkSection}`;
+		}
+	}
 
   async updateBacklinksInParentFolders(file: TFile) {
     await this.iterateParentFolders(file, async (folder) => {
@@ -256,6 +280,16 @@ class AutoBacklinksSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName("Set Backlink on note property")
+      .setDesc("Set to true, to set backlink url in note's frontmatter property instead of bottom of the note")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.useFrontmatter)
+				.onChange(async (value) => {
+					this.plugin.settings.useFrontmatter = value;
+					await this.plugin.saveSettings();
+				}));
   }
 }
 
